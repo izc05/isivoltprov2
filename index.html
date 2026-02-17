@@ -1,0 +1,1958 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IsivoltPro - Sistema de Inventario QR</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #7e8ba3 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            padding: 25px;
+            border-radius: 15px 15px 0 0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            color: white;
+        }
+
+        h1 {
+            color: white;
+            font-size: 26px;
+            margin-bottom: 5px;
+            font-weight: 700;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .subtitle {
+            color: rgba(255,255,255,0.9);
+            font-size: 14px;
+        }
+
+        .tabs {
+            display: flex;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            background: white;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            color: #666;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab.active {
+            color: #1e3c72;
+            border-bottom-color: #1e3c72;
+            font-weight: 600;
+            background: #f8f9fa;
+        }
+
+        .content {
+            background: white;
+            padding: 20px;
+            border-radius: 0 0 15px 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            min-height: 400px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .scan-section {
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        #video {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 10px;
+            display: none;
+            margin: 0 auto;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(30, 60, 114, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(30, 60, 114, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-success {
+            background: #28a745;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #1e3c72;
+            box-shadow: 0 0 0 3px rgba(30, 60, 114, 0.1);
+        }
+
+        .tool-card, .worker-card {
+            background: white;
+            padding: 18px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            border-left: 5px solid #1e3c72;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+        }
+
+        .tool-card:hover, .worker-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+
+        .tool-card.out {
+            border-left-color: #e74c3c;
+            background: #fff5f5;
+        }
+
+        .tool-card.in {
+            border-left-color: #27ae60;
+            background: #f0fdf4;
+        }
+
+        .tool-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .tool-info {
+            color: #666;
+            font-size: 14px;
+            margin: 3px 0;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+
+        .status-available {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-out {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .qr-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 10px 0;
+            border: 2px dashed #1e3c72;
+        }
+
+        .qr-code {
+            margin: 15px auto;
+        }
+
+        .history-item {
+            background: white;
+            padding: 16px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border-left: 4px solid #1e3c72;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            position: relative;
+            padding-left: 50px;
+        }
+
+        .history-item::before {
+            content: '';
+            position: absolute;
+            left: 16px;
+            top: 16px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #1e3c72;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .history-date {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .history-action {
+            font-weight: 600;
+            color: #1e3c72;
+            font-size: 15px;
+            margin-bottom: 3px;
+        }
+
+        .history-out {
+            border-left-color: #e74c3c;
+        }
+
+        .history-out::before {
+            background: #e74c3c;
+        }
+
+        .history-in {
+            border-left-color: #27ae60;
+        }
+
+        .history-in::before {
+            background: #27ae60;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .scan-result {
+            background: #d4edda;
+            border: 2px solid #28a745;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-weight: 600;
+        }
+
+        .scan-error {
+            background: #f8d7da;
+            border: 2px solid #dc3545;
+            color: #721c24;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            padding: 20px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            max-width: 400px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn-group .btn {
+            flex: 1;
+        }
+
+        .camera-icon {
+            width: 60px;
+            height: 60px;
+            margin: 20px auto;
+            display: block;
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 16px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 3px 10px rgba(30, 60, 114, 0.3);
+        }
+
+        .stat-number {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        .filter-section {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .filter-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .filter-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .date-badge {
+            display: inline-block;
+            background: #e8f4f8;
+            color: #1e3c72;
+            padding: 4px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+
+        .time-badge {
+            display: inline-block;
+            background: #f0f0f0;
+            color: #666;
+            padding: 4px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .export-btn {
+            background: #27ae60;
+            margin-top: 0;
+        }
+
+        .export-btn:hover {
+            background: #229954;
+        }
+
+        .btn-small {
+            padding: 8px 15px;
+            font-size: 12px;
+            margin-top: 0;
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .btn-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .badge-category {
+            background: #e8f4f8;
+            color: #1e3c72;
+        }
+
+        .low-stock-warning {
+            background: #fff3cd;
+            border-left: 4px solid #f39c12;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-size: 13px;
+            color: #856404;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .dashboard-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        .dashboard-card h3 {
+            margin: 0 0 15px 0;
+            color: #1e3c72;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .quick-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .quick-stat-item {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .quick-stat-number {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1e3c72;
+            margin-bottom: 3px;
+        }
+
+        .quick-stat-label {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .recent-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .recent-item {
+            padding: 10px;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 13px;
+        }
+
+        .recent-item:last-child {
+            border-bottom: none;
+        }
+
+        .recent-time {
+            color: #999;
+            font-size: 11px;
+        }
+
+        .alert-item {
+            background: #fff3cd;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-size: 13px;
+            color: #856404;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chart-container {
+            margin-top: 15px;
+        }
+
+        .chart-bar {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .chart-label {
+            width: 120px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .chart-bar-fill {
+            height: 20px;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            padding: 0 8px;
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .tab-indicator {
+            background: #e74c3c;
+            color: white;
+            border-radius: 10px;
+            padding: 2px 6px;
+            font-size: 10px;
+            font-weight: 600;
+            margin-left: 5px;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 16px 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 2000;
+            animation: slideIn 0.3s ease;
+            max-width: 350px;
+        }
+
+        .notification.success {
+            border-left: 4px solid #27ae60;
+        }
+
+        .notification.error {
+            border-left: 4px solid #e74c3c;
+        }
+
+        .notification-icon {
+            width: 24px;
+            height: 24px;
+            flex-shrink: 0;
+        }
+
+        .notification-content {
+            flex: 1;
+            font-size: 14px;
+            color: #333;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 0;
+            }
+            
+            body {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚡ IsivoltPro</h1>
+            <p class="subtitle">Control inteligente de inventario</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('dashboard')">📊 Panel</button>
+            <button class="tab" onclick="switchTab('scan')">📷 Escanear</button>
+            <button class="tab" onclick="switchTab('tools')">📦 Materiales</button>
+            <button class="tab" onclick="switchTab('workers')">👷 Personal</button>
+            <button class="tab" onclick="switchTab('history')">📋 Historial</button>
+        </div>
+
+        <div class="content">
+            <!-- TAB DASHBOARD -->
+            <div id="dashboard-tab" class="tab-content active">
+                <h2 style="margin-bottom: 15px;">Panel de Control</h2>
+                
+                <!-- Estadísticas Rápidas -->
+                <div class="dashboard-grid">
+                    <div class="dashboard-card">
+                        <h3>📊 Resumen General</h3>
+                        <div class="quick-stats">
+                            <div class="quick-stat-item">
+                                <div class="quick-stat-number" id="dash-total-materials">0</div>
+                                <div class="quick-stat-label">Total Materiales</div>
+                            </div>
+                            <div class="quick-stat-item">
+                                <div class="quick-stat-number" id="dash-available">0</div>
+                                <div class="quick-stat-label">Disponibles</div>
+                            </div>
+                            <div class="quick-stat-item">
+                                <div class="quick-stat-number" id="dash-in-use">0</div>
+                                <div class="quick-stat-label">En Uso</div>
+                            </div>
+                            <div class="quick-stat-item">
+                                <div class="quick-stat-number" id="dash-total-workers">0</div>
+                                <div class="quick-stat-label">Personal</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <h3>🔔 Alertas</h3>
+                        <div id="alerts-container">
+                            <p style="color: #999; font-size: 13px; text-align: center; padding: 20px 0;">
+                                Sin alertas pendientes
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+                    <div class="dashboard-card">
+                        <h3>📦 Materiales Más Usados</h3>
+                        <div class="chart-container" id="most-used-chart"></div>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <h3>⏱️ Actividad Reciente</h3>
+                        <div class="recent-list" id="recent-activity"></div>
+                    </div>
+                </div>
+
+                <div class="dashboard-card">
+                    <h3>👥 Personal con Materiales Asignados</h3>
+                    <div class="chart-container" id="workers-chart"></div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
+                    <button class="btn" onclick="switchTab('scan')">📷 Escanear QR</button>
+                    <button class="btn btn-success" onclick="switchTab('tools')">➕ Añadir Material</button>
+                </div>
+            </div>
+
+            <!-- TAB ESCANEAR -->
+            <div id="scan-tab" class="tab-content">
+                <div class="scan-section">
+                    <svg class="camera-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    <h2 style="margin-bottom: 10px;">Escanear Código QR</h2>
+                    <p style="color: #666; margin-bottom: 20px;">Usa la cámara para registrar entrada/salida</p>
+                    
+                    <video id="video" autoplay playsinline></video>
+                    <canvas id="canvas" style="display: none;"></canvas>
+                    
+                    <div id="scanResult"></div>
+                    
+                    <button id="startScanBtn" class="btn" onclick="startScanning()">
+                        📷 Iniciar Escaneo
+                    </button>
+                    <button id="stopScanBtn" class="btn btn-secondary" onclick="stopScanning()" style="display: none;">
+                        ⏹️ Detener Escaneo
+                    </button>
+                    
+                    <div style="margin: 20px 0; text-align: center; color: #999;">
+                        <div style="display: flex; align-items: center; margin: 15px 0;">
+                            <div style="flex: 1; height: 1px; background: #ddd;"></div>
+                            <span style="padding: 0 10px; font-size: 13px;">o</span>
+                            <div style="flex: 1; height: 1px; background: #ddd;"></div>
+                        </div>
+                    </div>
+                    
+                    <button class="btn" style="background: #6c757d;" onclick="showManualEntryModal()">
+                        ⌨️ Entrada Manual de Código
+                    </button>
+                </div>
+            </div>
+
+            <!-- TAB HERRAMIENTAS -->
+            <div id="tools-tab" class="tab-content">
+                <h2 style="margin-bottom: 15px;">Gestión de Materiales</h2>
+                
+                <input type="text" id="searchTools" placeholder="🔍 Buscar materiales..." 
+                       oninput="searchTools()" style="margin-bottom: 15px;">
+                
+                <button class="btn" onclick="showAddToolModal()">➕ Añadir Material</button>
+                
+                <div id="toolsList" style="margin-top: 20px;"></div>
+            </div>
+
+            <!-- TAB TRABAJADORES -->
+            <div id="workers-tab" class="tab-content">
+                <h2 style="margin-bottom: 15px;">Gestión de Personal</h2>
+                
+                <input type="text" id="searchWorkers" placeholder="🔍 Buscar personal..." 
+                       oninput="searchWorkers()" style="margin-bottom: 15px;">
+                
+                <button class="btn" onclick="showAddWorkerModal()">➕ Añadir Personal</button>
+                
+                <div id="workersList" style="margin-top: 20px;"></div>
+            </div>
+
+            <!-- TAB HISTORIAL -->
+            <div id="history-tab" class="tab-content">
+                <h2 style="margin-bottom: 15px;">Historial de Movimientos</h2>
+                
+                <!-- Estadísticas -->
+                <div class="stats-container" id="statsContainer"></div>
+                
+                <!-- Filtros -->
+                <div class="filter-section">
+                    <div class="filter-label">Filtrar por fecha</div>
+                    <div class="filter-row">
+                        <input type="date" id="filterDateFrom" onchange="applyFilters()">
+                        <input type="date" id="filterDateTo" onchange="applyFilters()">
+                    </div>
+                    <div class="filter-row">
+                        <select id="filterType" onchange="applyFilters()">
+                            <option value="">Todos los movimientos</option>
+                            <option value="out">Solo salidas</option>
+                            <option value="in">Solo entradas</option>
+                        </select>
+                        <select id="filterWorker" onchange="applyFilters()">
+                            <option value="">Todo el personal</option>
+                        </select>
+                    </div>
+                    <button class="btn export-btn" onclick="exportHistory()">📥 Exportar a CSV</button>
+                </div>
+                
+                <div id="historyList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL AÑADIR HERRAMIENTA -->
+    <div id="addToolModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Añadir Material</div>
+            <div class="form-group">
+                <label>Nombre del material</label>
+                <input type="text" id="toolName" placeholder="Ej: Taladro Bosch / Cable 2.5mm">
+            </div>
+            <div class="form-group">
+                <label>Código/Número de serie</label>
+                <input type="text" id="toolCode" placeholder="Ej: MAT-001">
+            </div>
+            <div class="form-group">
+                <label>Categoría</label>
+                <select id="toolCategory">
+                    <option value="">-- Seleccionar categoría --</option>
+                    <option value="Herramientas">Herramientas</option>
+                    <option value="Material Eléctrico">Material Eléctrico</option>
+                    <option value="Equipos">Equipos</option>
+                    <option value="Consumibles">Consumibles</option>
+                    <option value="EPIs">EPIs (Equipos de Protección)</option>
+                    <option value="Otro">Otro</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Ubicación (opcional)</label>
+                <input type="text" id="toolLocation" placeholder="Ej: Almacén A - Estante 3">
+            </div>
+            <div class="form-group">
+                <label>Descripción (opcional)</label>
+                <input type="text" id="toolDescription" placeholder="Detalles adicionales">
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-secondary" onclick="closeModal('addToolModal')">Cancelar</button>
+                <button class="btn" onclick="addTool()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL AÑADIR TRABAJADOR -->
+    <div id="addWorkerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Añadir Personal</div>
+            <div class="form-group">
+                <label>Nombre completo</label>
+                <input type="text" id="workerName" placeholder="Ej: Juan García">
+            </div>
+            <div class="form-group">
+                <label>Número de empleado</label>
+                <input type="text" id="workerCode" placeholder="Ej: EMP-001">
+            </div>
+            <div class="form-group">
+                <label>Departamento/Área (opcional)</label>
+                <select id="workerDepartment">
+                    <option value="">-- Seleccionar --</option>
+                    <option value="Eléctrico">Eléctrico</option>
+                    <option value="Fontanería">Fontanería</option>
+                    <option value="Carpintería">Carpintería</option>
+                    <option value="Mantenimiento">Mantenimiento</option>
+                    <option value="Producción">Producción</option>
+                    <option value="Almacén">Almacén</option>
+                    <option value="Otro">Otro</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Teléfono (opcional)</label>
+                <input type="tel" id="workerPhone" placeholder="Ej: 612345678">
+            </div>
+            <div class="form-group">
+                <label>Email (opcional)</label>
+                <input type="email" id="workerEmail" placeholder="Ej: juan@empresa.com">
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-secondary" onclick="closeModal('addWorkerModal')">Cancelar</button>
+                <button class="btn" onclick="addWorker()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL REGISTRAR MOVIMIENTO -->
+    <div id="movementModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header" id="movementTitle">Registrar Movimiento</div>
+            <div id="movementContent"></div>
+        </div>
+    </div>
+
+    <!-- MODAL VER QR -->
+    <div id="qrModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Código QR</div>
+            <div id="qrContent"></div>
+            <button class="btn btn-secondary" onclick="closeModal('qrModal')">Cerrar</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+
+    <script>
+        // ALMACENAMIENTO DE DATOS
+        let tools = JSON.parse(localStorage.getItem('tools')) || [];
+        let workers = JSON.parse(localStorage.getItem('workers')) || [];
+        let history = JSON.parse(localStorage.getItem('history')) || [];
+
+        // Datos de ejemplo si está vacío
+        if (tools.length === 0) {
+            tools = [
+                { id: '1', name: 'Taladro Bosch', code: 'MAT-001', category: 'Herramientas', location: 'Almacén A - Est. 1', description: 'Taladro percutor 750W', status: 'available', assignedTo: null },
+                { id: '2', name: 'Multímetro Fluke', code: 'MAT-002', category: 'Equipos', location: 'Taller Principal', description: 'Multímetro digital', status: 'available', assignedTo: null },
+                { id: '3', name: 'Cable 2.5mm (rollo 100m)', code: 'MAT-003', category: 'Material Eléctrico', location: 'Almacén B - Est. 5', description: 'Cable unipolar', status: 'available', assignedTo: null }
+            ];
+            saveData();
+        }
+
+        if (workers.length === 0) {
+            workers = [
+                { id: '1', name: 'Juan García', code: 'EMP-001', department: 'Eléctrico', phone: '612345678', email: 'juan@empresa.com' },
+                { id: '2', name: 'María López', code: 'EMP-002', department: 'Mantenimiento', phone: '698765432', email: 'maria@empresa.com' },
+                { id: '3', name: 'Carlos Ruiz', code: 'EMP-003', department: 'Producción', phone: '655555555', email: 'carlos@empresa.com' }
+            ];
+            saveData();
+        }
+
+        function saveData() {
+            localStorage.setItem('tools', JSON.stringify(tools));
+            localStorage.setItem('workers', JSON.stringify(workers));
+            localStorage.setItem('history', JSON.stringify(history));
+        }
+
+        // NAVEGACIÓN DE PESTAÑAS
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName + '-tab').classList.add('active');
+            
+            if (tabName === 'dashboard') renderDashboard();
+            if (tabName === 'tools') renderTools();
+            if (tabName === 'workers') renderWorkers();
+            if (tabName === 'history') renderHistory();
+        }
+
+        // DASHBOARD
+        function renderDashboard() {
+            // Estadísticas generales
+            document.getElementById('dash-total-materials').textContent = tools.length;
+            document.getElementById('dash-available').textContent = tools.filter(t => t.status === 'available').length;
+            document.getElementById('dash-in-use').textContent = tools.filter(t => t.status === 'out').length;
+            document.getElementById('dash-total-workers').textContent = workers.length;
+            
+            // Alertas
+            renderAlerts();
+            
+            // Materiales más usados
+            renderMostUsedMaterials();
+            
+            // Actividad reciente
+            renderRecentActivity();
+            
+            // Personal con materiales
+            renderWorkersWithMaterials();
+        }
+
+        function renderAlerts() {
+            const container = document.getElementById('alerts-container');
+            const alerts = [];
+            
+            // Materiales asignados hace más de 7 días
+            const weekAgo = new Date();
+            weekAgo.setDate(weekAgo.getDate() - 7);
+            
+            history.forEach(h => {
+                if (h.type === 'out') {
+                    const checkoutDate = new Date(h.date);
+                    if (checkoutDate < weekAgo) {
+                        const tool = tools.find(t => t.id === h.toolId);
+                        if (tool && tool.status === 'out') {
+                            const days = Math.floor((new Date() - checkoutDate) / (1000 * 60 * 60 * 24));
+                            alerts.push(`⚠️ ${h.toolName} lleva ${days} días asignado a ${h.workerName}`);
+                        }
+                    }
+                }
+            });
+            
+            // Materiales en uso
+            const materialsInUse = tools.filter(t => t.status === 'out').length;
+            const totalMaterials = tools.length;
+            const usagePercentage = totalMaterials > 0 ? (materialsInUse / totalMaterials * 100) : 0;
+            
+            if (usagePercentage > 80) {
+                alerts.push(`📊 Alto uso de inventario: ${usagePercentage.toFixed(0)}% de materiales en uso`);
+            }
+            
+            if (alerts.length === 0) {
+                container.innerHTML = '<p style="color: #999; font-size: 13px; text-align: center; padding: 20px 0;">✓ Sin alertas pendientes</p>';
+            } else {
+                container.innerHTML = alerts.map(alert => 
+                    `<div class="alert-item">${alert}</div>`
+                ).join('');
+            }
+        }
+
+        function renderMostUsedMaterials() {
+            const container = document.getElementById('most-used-chart');
+            
+            // Contar uso de cada material
+            const materialUsage = {};
+            history.forEach(h => {
+                if (h.type === 'out') {
+                    materialUsage[h.toolName] = (materialUsage[h.toolName] || 0) + 1;
+                }
+            });
+            
+            // Ordenar y tomar los top 5
+            const sorted = Object.entries(materialUsage)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5);
+            
+            if (sorted.length === 0) {
+                container.innerHTML = '<p style="color: #999; font-size: 13px; text-align: center; padding: 20px 0;">Sin datos suficientes</p>';
+                return;
+            }
+            
+            const maxValue = sorted[0][1];
+            
+            container.innerHTML = sorted.map(([name, count]) => {
+                const width = (count / maxValue * 100);
+                return `
+                    <div class="chart-bar">
+                        <div class="chart-label">${name}</div>
+                        <div class="chart-bar-fill" style="width: ${width}%">
+                            ${count} ${count === 1 ? 'uso' : 'usos'}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderRecentActivity() {
+            const container = document.getElementById('recent-activity');
+            const recentHistory = history.slice(0, 10);
+            
+            if (recentHistory.length === 0) {
+                container.innerHTML = '<p style="color: #999; font-size: 13px; text-align: center; padding: 20px 0;">Sin actividad reciente</p>';
+                return;
+            }
+            
+            container.innerHTML = recentHistory.map(item => {
+                const date = new Date(item.date);
+                const timeAgo = getTimeAgo(date);
+                const icon = item.type === 'out' ? '📤' : '📥';
+                const action = item.type === 'out' ? 'Salida' : 'Entrada';
+                
+                return `
+                    <div class="recent-item">
+                        <div><strong>${icon} ${item.toolName}</strong></div>
+                        <div style="color: #666; font-size: 12px;">${action}: ${item.workerName}</div>
+                        <div class="recent-time">${timeAgo}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderWorkersWithMaterials() {
+            const container = document.getElementById('workers-chart');
+            
+            // Contar materiales por trabajador
+            const workerMaterials = {};
+            tools.forEach(t => {
+                if (t.assignedTo) {
+                    const worker = workers.find(w => w.id === t.assignedTo);
+                    if (worker) {
+                        workerMaterials[worker.name] = (workerMaterials[worker.name] || 0) + 1;
+                    }
+                }
+            });
+            
+            const sorted = Object.entries(workerMaterials)
+                .sort((a, b) => b[1] - a[1]);
+            
+            if (sorted.length === 0) {
+                container.innerHTML = '<p style="color: #999; font-size: 13px; text-align: center; padding: 20px 0;">Ningún material asignado actualmente</p>';
+                return;
+            }
+            
+            const maxValue = sorted[0][1];
+            
+            container.innerHTML = sorted.map(([name, count]) => {
+                const width = (count / maxValue * 100);
+                return `
+                    <div class="chart-bar">
+                        <div class="chart-label">${name}</div>
+                        <div class="chart-bar-fill" style="width: ${width}%">
+                            ${count} ${count === 1 ? 'material' : 'materiales'}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getTimeAgo(date) {
+            const seconds = Math.floor((new Date() - date) / 1000);
+            
+            if (seconds < 60) return 'Hace un momento';
+            if (seconds < 3600) return `Hace ${Math.floor(seconds / 60)} min`;
+            if (seconds < 86400) return `Hace ${Math.floor(seconds / 3600)} h`;
+            if (seconds < 604800) return `Hace ${Math.floor(seconds / 86400)} días`;
+            
+            return date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+        }
+
+        // ESCANEO QR
+        let videoStream = null;
+        let scanning = false;
+
+        async function startScanning() {
+            try {
+                // Verificar si el navegador soporta getUserMedia
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    showNotification('Tu navegador no soporta acceso a la cámara. Usa Chrome, Firefox o Safari actualizado.', 'error');
+                    return;
+                }
+
+                const video = document.getElementById('video');
+                const constraints = {
+                    video: { 
+                        facingMode: 'environment',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    }
+                };
+                
+                videoStream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = videoStream;
+                video.style.display = 'block';
+                
+                document.getElementById('startScanBtn').style.display = 'none';
+                document.getElementById('stopScanBtn').style.display = 'block';
+                document.getElementById('scanResult').innerHTML = '';
+                
+                scanning = true;
+                
+                // Asegurar que el video está listo antes de escanear
+                video.onloadedmetadata = () => {
+                    video.play();
+                    scanQRCode();
+                };
+            } catch (error) {
+                console.error('Error de cámara:', error);
+                
+                let errorMessage = '';
+                let instructions = '';
+                
+                if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+                    errorMessage = '❌ Permiso de cámara denegado';
+                    instructions = `
+                        <div style="background: #fff3cd; border: 2px solid #ffc107; padding: 15px; border-radius: 10px; margin-top: 15px; text-align: left;">
+                            <div style="font-weight: 600; color: #856404; margin-bottom: 10px;">🔧 Cómo habilitar la cámara:</div>
+                            <ol style="color: #856404; font-size: 13px; margin-left: 20px; line-height: 1.8;">
+                                <li><strong>Chrome Android:</strong><br>
+                                    • Toca el candado (🔒) en la barra superior<br>
+                                    • Selecciona "Permisos"<br>
+                                    • Activa "Cámara"<br>
+                                    • Recarga la página (↻)
+                                </li>
+                                <li style="margin-top: 10px;"><strong>Si estás abriendo desde archivo:</strong><br>
+                                    El archivo local (content://) no permite cámara por seguridad. Necesitas abrir el archivo desde:<br>
+                                    • Google Drive (compartir → "Abrir con navegador")<br>
+                                    • Dropbox o OneDrive<br>
+                                    • Un servidor web
+                                </li>
+                                <li style="margin-top: 10px;"><strong>Firefox Android:</strong><br>
+                                    Firefox es menos restrictivo con archivos locales, intenta abrirlo con Firefox
+                                </li>
+                            </ol>
+                            <div style="margin-top: 10px; padding: 10px; background: #fff; border-radius: 5px; font-size: 12px;">
+                                <strong>💡 Solución recomendada:</strong> Sube este archivo a Google Drive, ábrelo desde ahí y concede permisos cuando te lo pida.
+                            </div>
+                        </div>
+                    `;
+                } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+                    errorMessage = '❌ No se encontró cámara en el dispositivo';
+                    instructions = '<div style="margin-top: 10px; color: #666;">Verifica que tu dispositivo tenga cámara disponible.</div>';
+                } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
+                    errorMessage = '❌ La cámara está en uso por otra aplicación';
+                    instructions = '<div style="margin-top: 10px; color: #666;">Cierra otras apps que puedan estar usando la cámara e intenta de nuevo.</div>';
+                } else if (error.name === 'OverconstrainedError') {
+                    errorMessage = '❌ Configuración de cámara no compatible';
+                    instructions = '<div style="margin-top: 10px; color: #666;">Intentando con configuración alternativa...</div>';
+                    // Reintentar con configuración más simple
+                    setTimeout(retryWithBasicConstraints, 1000);
+                    showNotification(errorMessage, 'error');
+                    return;
+                } else if (error.name === 'SecurityError') {
+                    errorMessage = '❌ Error de seguridad';
+                    instructions = `
+                        <div style="margin-top: 10px; color: #666;">
+                            El acceso a la cámara requiere una conexión segura (HTTPS).<br>
+                            <strong>Sugerencias:</strong><br>
+                            • Sube este archivo a un servidor web con HTTPS<br>
+                            • O usa una herramienta como GitHub Pages o Netlify
+                        </div>
+                    `;
+                } else {
+                    errorMessage = '❌ Error al acceder a la cámara';
+                    instructions = `<div style="margin-top: 10px; color: #666;">Detalles: ${error.message}</div>`;
+                }
+                
+                showNotification(errorMessage, 'error');
+                
+                // Mostrar instrucciones adicionales
+                const resultDiv = document.getElementById('scanResult');
+                resultDiv.innerHTML = instructions;
+            }
+        }
+
+
+        async function retryWithBasicConstraints() {
+            try {
+                const video = document.getElementById('video');
+                const constraints = { video: true }; // Configuración básica
+                
+                showNotification('Intentando con configuración básica...', 'success');
+                
+                videoStream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = videoStream;
+                video.style.display = 'block';
+                
+                document.getElementById('startScanBtn').style.display = 'none';
+                document.getElementById('stopScanBtn').style.display = 'block';
+                document.getElementById('scanResult').innerHTML = '';
+                
+                scanning = true;
+                
+                video.onloadedmetadata = () => {
+                    video.play();
+                    showNotification('✓ Cámara activada correctamente', 'success');
+                    scanQRCode();
+                };
+            } catch (error) {
+                showNotification('No se pudo activar la cámara. Verifica los permisos.', 'error');
+                const resultDiv = document.getElementById('scanResult');
+                resultDiv.innerHTML = '<div style="margin-top: 10px; color: #e74c3c;">Por favor, permite el acceso a la cámara en la configuración de tu navegador.</div>';
+            }
+        }
+        function stopScanning() {
+            scanning = false;
+            const video = document.getElementById('video');
+            
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+                videoStream = null;
+            }
+            
+            video.style.display = 'none';
+            document.getElementById('startScanBtn').style.display = 'block';
+            document.getElementById('stopScanBtn').style.display = 'none';
+        }
+
+        function scanQRCode() {
+            if (!scanning) return;
+            
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            const context = canvas.getContext('2d');
+            
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
+                const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height);
+                
+                if (code) {
+                    handleQRCode(code.data);
+                    return;
+                }
+            }
+            
+            requestAnimationFrame(scanQRCode);
+        }
+
+        function handleQRCode(qrData) {
+            stopScanning();
+            
+            try {
+                const data = JSON.parse(qrData);
+                
+                if (data.type === 'tool') {
+                    const tool = tools.find(t => t.id === data.id);
+                    if (tool) {
+                        showMovementModal(tool);
+                    } else {
+                        showNotification('Material no encontrado en el sistema', 'error');
+                    }
+                } else if (data.type === 'worker') {
+                    showNotification(`Personal escaneado: ${data.name}`, 'success');
+                } else {
+                    showNotification('Código QR no reconocido', 'error');
+                }
+            } catch (e) {
+                showNotification('Código QR inválido', 'error');
+            }
+        }
+
+        function showScanResult(message, type) {
+            showNotification(message, type);
+        }
+
+        function showNotification(message, type = 'success') {
+            // Eliminar notificación anterior si existe
+            const existing = document.querySelector('.notification');
+            if (existing) {
+                existing.remove();
+            }
+            
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            
+            const icon = type === 'success' ? '✓' : '✕';
+            const iconColor = type === 'success' ? '#27ae60' : '#e74c3c';
+            
+            notification.innerHTML = `
+                <div class="notification-icon" style="color: ${iconColor}; font-size: 20px; font-weight: bold;">
+                    ${icon}
+                </div>
+                <div class="notification-content">${message}</div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => {
+                    notification.remove();
+                }, 300);
+            }, 4000);
+        }
+
+        function showMovementModal(tool) {
+            const modal = document.getElementById('movementModal');
+            const title = document.getElementById('movementTitle');
+            const content = document.getElementById('movementContent');
+            
+            if (tool.status === 'available') {
+                title.textContent = 'Registrar Salida';
+                content.innerHTML = `
+                    <div class="tool-card">
+                        <div class="tool-name">${tool.name}</div>
+                        <div class="tool-info">Código: ${tool.code}</div>
+                    </div>
+                    <div class="form-group">
+                        <label>Seleccionar personal</label>
+                        <select id="selectedWorker">
+                            <option value="">-- Seleccionar --</option>
+                            ${workers.map(w => `<option value="${w.id}">${w.name} (${w.code})</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-secondary" onclick="closeModal('movementModal')">Cancelar</button>
+                        <button class="btn btn-danger" onclick="registerCheckout('${tool.id}')">Registrar Salida</button>
+                    </div>
+                `;
+            } else {
+                const worker = workers.find(w => w.id === tool.assignedTo);
+                title.textContent = 'Registrar Entrada';
+                content.innerHTML = `
+                    <div class="tool-card out">
+                        <div class="tool-name">${tool.name}</div>
+                        <div class="tool-info">Código: ${tool.code}</div>
+                        <div class="tool-info">Asignado a: ${worker ? worker.name : 'Desconocido'}</div>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-secondary" onclick="closeModal('movementModal')">Cancelar</button>
+                        <button class="btn btn-success" onclick="registerCheckin('${tool.id}')">Registrar Entrada</button>
+                    </div>
+                `;
+            }
+            
+            modal.classList.add('active');
+        }
+
+        function registerCheckout(toolId) {
+            const workerId = document.getElementById('selectedWorker').value;
+            if (!workerId) {
+                showNotification('Por favor selecciona un miembro del personal', 'error');
+                return;
+            }
+            
+            const tool = tools.find(t => t.id === toolId);
+            const worker = workers.find(w => w.id === workerId);
+            
+            tool.status = 'out';
+            tool.assignedTo = workerId;
+            
+            history.unshift({
+                id: Date.now().toString(),
+                date: new Date().toISOString(),
+                type: 'out',
+                toolId: toolId,
+                toolName: tool.name,
+                workerId: workerId,
+                workerName: worker.name
+            });
+            
+            saveData();
+            closeModal('movementModal');
+            showNotification(`Salida registrada: ${tool.name} → ${worker.name}`, 'success');
+            renderTools();
+            renderDashboard();
+        }
+
+        function registerCheckin(toolId) {
+            const tool = tools.find(t => t.id === toolId);
+            const worker = workers.find(w => w.id === tool.assignedTo);
+            
+            history.unshift({
+                id: Date.now().toString(),
+                date: new Date().toISOString(),
+                type: 'in',
+                toolId: toolId,
+                toolName: tool.name,
+                workerId: tool.assignedTo,
+                workerName: worker ? worker.name : 'Desconocido'
+            });
+            
+            tool.status = 'available';
+            tool.assignedTo = null;
+            
+            saveData();
+            closeModal('movementModal');
+            showNotification(`Entrada registrada: ${tool.name}`, 'success');
+            renderTools();
+            renderDashboard();
+        }
+
+        // GESTIÓN DE HERRAMIENTAS
+        function renderTools(searchTerm = '') {
+            const list = document.getElementById('toolsList');
+            
+            let filteredTools = tools;
+            if (searchTerm) {
+                const term = searchTerm.toLowerCase();
+                filteredTools = tools.filter(t => 
+                    t.name.toLowerCase().includes(term) || 
+                    t.code.toLowerCase().includes(term) ||
+                    (t.category && t.category.toLowerCase().includes(term)) ||
+                    (t.description && t.description.toLowerCase().includes(term))
+                );
+            }
+            
+            if (filteredTools.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        <p>${searchTerm ? 'No se encontraron materiales' : 'No hay materiales registrados'}</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            list.innerHTML = filteredTools.map(tool => {
+                const worker = tool.assignedTo ? workers.find(w => w.id === tool.assignedTo) : null;
+                return `
+                    <div class="tool-card ${tool.status}">
+                        <div class="tool-name">
+                            ${tool.name}
+                            ${tool.category ? `<span class="badge badge-category">${tool.category}</span>` : ''}
+                        </div>
+                        <div class="tool-info">📝 Código: ${tool.code}</div>
+                        ${tool.location ? `<div class="tool-info">📍 Ubicación: ${tool.location}</div>` : ''}
+                        ${tool.description ? `<div class="tool-info">ℹ️ ${tool.description}</div>` : ''}
+                        ${worker ? `<div class="tool-info">👤 Asignado a: ${worker.name}</div>` : ''}
+                        <span class="status-badge ${tool.status === 'available' ? 'status-available' : 'status-out'}">
+                            ${tool.status === 'available' ? '✓ Disponible' : '✗ En uso'}
+                        </span>
+                        <div class="action-buttons">
+                            <button class="btn btn-small btn-icon" onclick="showQR('tool', '${tool.id}')">
+                                📱 Ver QR
+                            </button>
+                            <button class="btn btn-small btn-icon ${tool.status === 'available' ? 'btn-danger' : 'btn-success'}" onclick="quickMovement('${tool.id}')">
+                                ${tool.status === 'available' ? '📤 Prestar' : '📥 Devolver'}
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function searchTools() {
+            const searchTerm = document.getElementById('searchTools').value;
+            renderTools(searchTerm);
+        }
+
+        function quickMovement(toolId) {
+            const tool = tools.find(t => t.id === toolId);
+            if (!tool) return;
+            
+            if (tool.status === 'available') {
+                // Mostrar modal para salida
+                showMovementModal(tool);
+            } else {
+                // Entrada directa
+                registerCheckin(toolId);
+            }
+        }
+
+        function showAddToolModal() {
+            document.getElementById('toolName').value = '';
+            document.getElementById('toolCode').value = '';
+            document.getElementById('toolCategory').value = '';
+            document.getElementById('toolLocation').value = '';
+            document.getElementById('toolDescription').value = '';
+            document.getElementById('addToolModal').classList.add('active');
+        }
+
+        function addTool() {
+            const name = document.getElementById('toolName').value.trim();
+            const code = document.getElementById('toolCode').value.trim();
+            const category = document.getElementById('toolCategory').value.trim();
+            const location = document.getElementById('toolLocation').value.trim();
+            const description = document.getElementById('toolDescription').value.trim();
+            
+            if (!name || !code) {
+                showNotification('Por favor completa los campos obligatorios', 'error');
+                return;
+            }
+            
+            const tool = {
+                id: Date.now().toString(),
+                name,
+                code,
+                category,
+                location,
+                description,
+                status: 'available',
+                assignedTo: null
+            };
+            
+            tools.push(tool);
+            saveData();
+            closeModal('addToolModal');
+            showNotification(`Material "${name}" añadido correctamente`, 'success');
+            renderTools();
+            renderDashboard();
+        }
+
+        // GESTIÓN DE TRABAJADORES
+        function renderWorkers(searchTerm = '') {
+            const list = document.getElementById('workersList');
+            
+            let filteredWorkers = workers;
+            if (searchTerm) {
+                const term = searchTerm.toLowerCase();
+                filteredWorkers = workers.filter(w => 
+                    w.name.toLowerCase().includes(term) || 
+                    w.code.toLowerCase().includes(term) ||
+                    (w.department && w.department.toLowerCase().includes(term))
+                );
+            }
+            
+            if (filteredWorkers.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                        <p>${searchTerm ? 'No se encontró personal' : 'No hay personal registrado'}</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            list.innerHTML = filteredWorkers.map(worker => {
+                const assignedTools = tools.filter(t => t.assignedTo === worker.id);
+                return `
+                    <div class="worker-card">
+                        <div class="tool-name">${worker.name}</div>
+                        <div class="tool-info">📋 Empleado: ${worker.code}</div>
+                        ${worker.department ? `<div class="tool-info">🏢 Departamento: ${worker.department}</div>` : ''}
+                        ${worker.phone ? `<div class="tool-info">📞 Teléfono: ${worker.phone}</div>` : ''}
+                        ${worker.email ? `<div class="tool-info">📧 Email: ${worker.email}</div>` : ''}
+                        <div class="tool-info">📦 Materiales: ${assignedTools.length}</div>
+                        ${assignedTools.length > 0 ? `
+                            <div style="margin-top: 5px; font-size: 13px; color: #666;">
+                                ${assignedTools.map(t => t.name).join(', ')}
+                            </div>
+                        ` : ''}
+                        <div style="margin-top: 10px;">
+                            <button class="btn" style="font-size: 12px; padding: 8px 15px;" onclick="showQR('worker', '${worker.id}')">
+                                📱 Ver QR
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function searchWorkers() {
+            const searchTerm = document.getElementById('searchWorkers').value;
+            renderWorkers(searchTerm);
+        }
+
+        function showAddWorkerModal() {
+            document.getElementById('workerName').value = '';
+            document.getElementById('workerCode').value = '';
+            document.getElementById('workerDepartment').value = '';
+            document.getElementById('workerPhone').value = '';
+            document.getElementById('workerEmail').value = '';
+            document.getElementById('addWorkerModal').classList.add('active');
+        }
+
+        function addWorker() {
+            const name = document.getElementById('workerName').value.trim();
+            const code = document.getElementById('workerCode').value.trim();
+            const department = document.getElementById('workerDepartment').value.trim();
+            const phone = document.getElementById('workerPhone').value.trim();
+            const email = document.getElementById('workerEmail').value.trim();
+            
+            if (!name || !code) {
+                showNotification('Por favor completa todos los campos', 'error');
+                return;
+            }
+            
+            const worker = {
+                id: Date.now().toString(),
+                name,
+                code,
+                department,
+                phone,
+                email
+            };
+            
+            workers.push(worker);
+            saveData();
+            closeModal('addWorkerModal');
+            showNotification(`Personal "${name}" añadido correctamente`, 'success');
+            renderWorkers();
+            renderDashboard();
+        }
+
+        // HISTORIAL
+        let filteredHistory = [];
+
+        function renderHistory() {
+            const list = document.getElementById('historyList');
+            
+            // Actualizar opciones de filtro de personal
+            const filterWorker = document.getElementById('filterWorker');
+            filterWorker.innerHTML = '<option value="">Todo el personal</option>';
+            workers.forEach(w => {
+                filterWorker.innerHTML += `<option value="${w.id}">${w.name}</option>`;
+            });
+            
+            // Renderizar estadísticas
+            renderStats();
+            
+            // Aplicar filtros
+            filteredHistory = [...history];
+            
+            if (filteredHistory.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                        </svg>
+                        <p>No hay movimientos registrados</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            list.innerHTML = filteredHistory.map(item => {
+                const date = new Date(item.date);
+                const dateStr = date.toLocaleDateString('es-ES', { 
+                    day: '2-digit', 
+                    month: 'short', 
+                    year: 'numeric'
+                });
+                const timeStr = date.toLocaleTimeString('es-ES', { 
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                const icon = item.type === 'out' ? '📤' : '📥';
+                const actionText = item.type === 'out' ? 'Salida' : 'Entrada';
+                
+                return `
+                    <div class="history-item history-${item.type}">
+                        <div class="history-date">
+                            <span class="date-badge">${dateStr}</span>
+                            <span class="time-badge">${timeStr}</span>
+                        </div>
+                        <div class="history-action">
+                            ${icon} ${actionText}: ${item.toolName}
+                        </div>
+                        <div class="tool-info">👤 ${item.workerName}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderStats() {
+            const statsContainer = document.getElementById('statsContainer');
+            
+            const totalMovements = history.length;
+            const totalOut = history.filter(h => h.type === 'out').length;
+            const totalIn = history.filter(h => h.type === 'in').length;
+            const toolsInUse = tools.filter(t => t.status === 'out').length;
+            
+            statsContainer.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-number">${totalMovements}</div>
+                    <div class="stat-label">Total Movimientos</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);">
+                    <div class="stat-number">${totalOut}</div>
+                    <div class="stat-label">Salidas</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #27ae60 0%, #229954 100%);">
+                    <div class="stat-number">${totalIn}</div>
+                    <div class="stat-label">Entradas</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);">
+                    <div class="stat-number">${toolsInUse}</div>
+                    <div class="stat-label">En uso ahora</div>
+                </div>
+            `;
+        }
+
+        function applyFilters() {
+            const dateFrom = document.getElementById('filterDateFrom').value;
+            const dateTo = document.getElementById('filterDateTo').value;
+            const filterType = document.getElementById('filterType').value;
+            const filterWorker = document.getElementById('filterWorker').value;
+            
+            filteredHistory = [...history];
+            
+            // Filtrar por fecha desde
+            if (dateFrom) {
+                const fromDate = new Date(dateFrom);
+                fromDate.setHours(0, 0, 0, 0);
+                filteredHistory = filteredHistory.filter(h => {
+                    const itemDate = new Date(h.date);
+                    itemDate.setHours(0, 0, 0, 0);
+                    return itemDate >= fromDate;
+                });
+            }
+            
+            // Filtrar por fecha hasta
+            if (dateTo) {
+                const toDate = new Date(dateTo);
+                toDate.setHours(23, 59, 59, 999);
+                filteredHistory = filteredHistory.filter(h => {
+                    const itemDate = new Date(h.date);
+                    return itemDate <= toDate;
+                });
+            }
+            
+            // Filtrar por tipo
+            if (filterType) {
+                filteredHistory = filteredHistory.filter(h => h.type === filterType);
+            }
+            
+            // Filtrar por trabajador
+            if (filterWorker) {
+                filteredHistory = filteredHistory.filter(h => h.workerId === filterWorker);
+            }
+            
+            // Re-renderizar
+            const list = document.getElementById('historyList');
+            if (filteredHistory.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <p>No hay movimientos que coincidan con los filtros</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            list.innerHTML = filteredHistory.map(item => {
+                const date = new Date(item.date);
+                const dateStr = date.toLocaleDateString('es-ES', { 
+                    day: '2-digit', 
+                    month: 'short', 
+                    year: 'numeric'
+                });
+                const timeStr = date.toLocaleTimeString('es-ES', { 
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                const icon = item.type === 'out' ? '📤' : '📥';
+                const actionText = item.type === 'out' ? 'Salida' : 'Entrada';
+                
+                return `
+                    <div class="history-item history-${item.type}">
+                        <div class="history-date">
+                            <span class="date-badge">${dateStr}</span>
+                            <span class="time-badge">${timeStr}</span>
+                        </div>
+                        <div class="history-action">
+                            ${icon} ${actionText}: ${item.toolName}
+                        </div>
+                        <div class="tool-info">👤 ${item.workerName}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function exportHistory() {
+            if (filteredHistory.length === 0) {
+                showNotification('No hay datos para exportar', 'error');
+                return;
+            }
+            
+            // Crear CSV
+            let csv = 'Fecha,Hora,Tipo,Material,Personal\n';
+            filteredHistory.forEach(item => {
+                const date = new Date(item.date);
+                const dateStr = date.toLocaleDateString('es-ES');
+                const timeStr = date.toLocaleTimeString('es-ES');
+                const type = item.type === 'out' ? 'Salida' : 'Entrada';
+                csv += `${dateStr},${timeStr},${type},"${item.toolName}","${item.workerName}"\n`;
+            });
+            
+            // Descargar
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `historial_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showNotification(`Historial exportado: ${filteredHistory.length} movimientos`, 'success');
+        }
+
+        // CÓDIGOS QR
+        function showQR(type, id) {
+            const modal = document.getElementById('qrModal');
+            const content = document.getElementById('qrContent');
+            
+            let data, item;
+            if (type === 'tool') {
+                item = tools.find(t => t.id === id);
+                data = { type: 'tool', id: item.id, name: item.name, code: item.code };
+            } else {
+                item = workers.find(w => w.id === id);
+                data = { type: 'worker', id: item.id, name: item.name, code: item.code };
+            }
+            
+            content.innerHTML = `
+                <div class="qr-container">
+                    <div style="font-weight: 600; margin-bottom: 10px;">${item.name}</div>
+                    <div style="color: #666; font-size: 14px; margin-bottom: 15px;">Código: ${item.code}</div>
+                    <div id="qrcode" class="qr-code"></div>
+                    <div style="margin-top: 15px; font-size: 12px; color: #999;">
+                        Escanea este código para registrar movimientos
+                    </div>
+                </div>
+            `;
+            
+            QRCode.toCanvas(JSON.stringify(data), { width: 250, margin: 2 }, (error, canvas) => {
+                if (error) {
+                    console.error(error);
+                    return;
+                }
+                document.getElementById('qrcode').appendChild(canvas);
+            });
+            
+            modal.classList.add('active');
+        }
+
+        // UTILIDADES
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        // Cerrar modales al hacer clic fuera
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('active');
+                }
+            });
+        });
+
+        // Renderizar al cargar
+        renderDashboard();
+        renderTools();
+    </script>
+</body>
+</html>
