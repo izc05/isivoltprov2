@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#0b132b" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>IsiVolt Pro · Legionella</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icons/icon-192.png" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="bg-blob blob-a"></div>
+  <div class="bg-blob blob-b"></div>
+  <div class="bg-sheen"></div>
+
+  <!-- TOPBAR -->
+  <header class="topbar glass">
+    <div class="brand">
+      <div class="logo">⚡</div>
+      <div>
+        <div class="title">IsiVolt Pro</div>
+        <div class="subtitle">Legionella Control (PWA)</div>
+      </div>
+    </div>
+    <div class="hdr-btns">
+      <button id="btnGuide" class="btn btn-icon" title="Guía rápida">🎧</button>
+      <button id="btnSettings" class="btn btn-icon" title="Ajustes">⚙️</button>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- ═══════════ PERFIL ═══════════ -->
+    <section id="screenProfile" class="screen">
+      <div class="card glass">
+        <h1>Bienvenido a IsiVolt Pro</h1>
+        <p class="muted">Introduce tu nombre de técnico. Los datos se guardan localmente en este dispositivo.</p>
+        <div class="col" style="gap:10px;margin-top:16px">
+          <input id="techName" class="input" placeholder="Nombre técnico (ej: Paco)" maxlength="18" />
+          <button id="btnSetTech" class="btn btn-primary btn-lg">Entrar →</button>
+        </div>
+        <div class="divider"></div>
+        <p class="muted tiny">Consejo: usa el mismo nombre siempre en el mismo móvil para mantener el historial limpio.</p>
+      </div>
+    </section>
+
+    <!-- ═══════════ HOME ═══════════ -->
+    <section id="screenHome" class="screen hidden">
+      <div class="grid">
+
+        <div class="card glass">
+          <div class="kpi">
+            <div>
+              <div class="muted tiny">Técnico activo</div>
+              <div id="kpiTech" class="kpi-value">—</div>
+            </div>
+            <div class="row" style="gap:6px">
+              <button id="btnSwitchTech" class="btn btn-ghost btn-sm">Cambiar</button>
+              <button id="btnLogout" class="btn btn-danger btn-sm">Cerrar</button>
+            </div>
+          </div>
+          <div class="kpi" style="margin-top:12px">
+            <div>
+              <div class="muted tiny">OT de hoy</div>
+              <div id="kpiToday" class="kpi-value">0 / 0</div>
+            </div>
+            <div class="pill" id="pillOffline">—</div>
+          </div>
+        </div>
+
+        <div class="card glass">
+          <h2>Acciones rápidas</h2>
+          <div class="actions">
+            <button id="btnScan" class="btn btn-primary">📷 Escanear QR</button>
+            <button id="btnAddCode" class="btn btn-primary">➕ Añadir punto</button>
+            <button id="btnMonthly" class="btn btn-ghost">🧪 Informe mensual</button>
+            <button id="btnHistory" class="btn btn-ghost">🕘 Historial</button>
+          </div>
+          <div class="divider"></div>
+          <div class="row" style="gap:6px;flex-wrap:wrap">
+            <button id="btnExplainOT" class="btn btn-ghost btn-sm">ℹ️ ¿Qué es OT?</button>
+            <button id="btnClearOT" class="btn btn-danger btn-sm">🗑️ Vaciar OT</button>
+          </div>
+          <p class="muted tiny" style="margin-top:10px">Crea la lista en el taller y ve cerrando en campo.</p>
+        </div>
+
+        <div class="card glass" style="grid-column:1/-1">
+          <h2>OT de hoy</h2>
+          <div id="otList" class="list"></div>
+          <div id="otEmpty" class="empty muted">Sin puntos. Añade con QR o código.</div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ═══════════ SCAN ═══════════ -->
+    <section id="screenScan" class="screen hidden">
+      <div class="card glass">
+        <div class="row space-between">
+          <h2 id="scanTitle">Escanear QR</h2>
+          <button class="btn btn-icon" data-nav="home">✖</button>
+        </div>
+        <div class="muted tiny" id="scanHint">Si tu móvil no soporta escaneo nativo, usa el campo inferior.</div>
+        <div class="scanbox">
+          <video id="qrVideo" playsinline></video>
+          <div class="scan-overlay"></div>
+        </div>
+        <div class="row">
+          <button id="btnStartScan" class="btn btn-primary" style="flex:1">Iniciar cámara</button>
+          <button id="btnStopScan" class="btn btn-ghost">Detener</button>
+        </div>
+        <div class="divider"></div>
+        <div class="row">
+          <input id="manualCodeFromScan" class="input" placeholder="O escribe código" />
+          <button id="btnManualGo" class="btn">Añadir</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════ PUNTO ═══════════ -->
+    <section id="screenPoint" class="screen hidden">
+      <div class="card glass">
+        <div class="row space-between">
+          <div>
+            <div class="muted tiny">Punto / Ubicación</div>
+            <div id="pointCode" class="bigcode">—</div>
+            <div id="pointHotelDisplay" class="muted" style="font-size:13px;margin-top:2px"></div>
+          </div>
+          <div class="row" style="gap:6px">
+            <button id="btnEditCode" class="btn btn-icon" title="Editar código">✏️</button>
+            <button class="btn btn-icon" data-nav="home">⬅</button>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="grid2">
+
+          <div class="panel glass-lite">
+            <h3>📊 Calculadora</h3>
+
+            <label class="label">Hotel / Ubicación (opcional)</label>
+            <input id="hotelName" class="input" placeholder="Ej: Hotel Meliá · Planta 3" maxlength="60" />
+
+            <label class="label">Litros de agua</label>
+            <div class="row">
+              <input id="liters" class="input" type="number" inputmode="decimal" min="0" step="1" placeholder="Ej: 60" />
+              <button id="btnUseDefaultLiters" class="btn btn-ghost btn-sm">60 L</button>
+            </div>
+
+            <div class="calc-result" style="margin-top:12px">
+              <div class="muted tiny">Dosis estimada</div>
+              <div id="doseMl" class="dose">—</div>
+              <div class="muted tiny">ml de lejía · queda registrada al finalizar</div>
+            </div>
+
+            <label class="label" style="margin-top:12px">Tiempo objetivo (min)</label>
+            <div class="row">
+              <input id="targetMinutes" class="input" type="number" min="1" step="1" />
+              <button id="btnTimeAuto" class="btn btn-ghost btn-sm">Auto</button>
+            </div>
+
+            <label class="label">Observación (opcional)</label>
+            <textarea id="pointNote" class="input textarea" rows="2" placeholder="Sin retorno / Puerta cerrada…"></textarea>
+
+            <div class="col" style="gap:8px;margin-top:14px">
+              <button id="btnStartTimer" class="btn btn-primary btn-lg">⏱ Iniciar cronómetro</button>
+              <div class="row" style="gap:8px">
+                <button id="btnSaveNote" class="btn btn-ghost" style="flex:1">💾 Guardar nota</button>
+                <button id="btnMarkIssue" class="btn btn-danger" style="flex:1">⚠ Incidencia</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel glass-lite">
+            <h3>✅ Checklist</h3>
+            <div class="checklist">
+              <label><input type="checkbox" id="chkConnect" /> Conectar recirculación</label>
+              <label><input type="checkbox" id="chkReturn" /> Verificar retorno</label>
+              <label><input type="checkbox" id="chkDose" /> Añadir dosis</label>
+              <label><input type="checkbox" id="chkStart" /> Iniciar recirculación</label>
+            </div>
+            <div class="divider thin"></div>
+            <div class="muted tiny">Al finalizar se registra en historial con fecha/hora automáticamente.</div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════ TIMER ═══════════ -->
+    <section id="screenTimer" class="screen hidden">
+      <div class="card glass center">
+        <div class="row space-between">
+          <div style="text-align:left">
+            <div class="muted tiny">En proceso</div>
+            <div id="timerCode" class="bigcode">—</div>
+            <div id="timerHotel" class="muted" style="font-size:13px;margin-top:2px"></div>
+          </div>
+          <div class="row" style="gap:6px">
+            <button id="btnMinimizeTimer" class="btn btn-ghost btn-sm" title="Minimizar y volver">▼ Minimizar</button>
+            <button id="btnExitTimer" class="btn btn-icon" title="Ir a inicio">🏠</button>
+          </div>
+        </div>
+
+        <div class="timer-tank">
+          <div class="water" id="waterFill"></div>
+          <div class="tank-glass"></div>
+          <div class="timer-overlay">
+            <div id="timerLeft" class="timer-left">00:00</div>
+            <div class="muted tiny" id="timerTarget">Objetivo: —</div>
+          </div>
+        </div>
+
+        <div class="row center" style="gap:8px;flex-wrap:wrap">
+          <button id="btnPause" class="btn btn-ghost">⏸ Pausar</button>
+          <button id="btnResume" class="btn btn-ghost hidden">▶ Reanudar</button>
+          <button id="btnFinish" class="btn btn-primary">✅ Finalizar</button>
+        </div>
+
+        <div class="divider"></div>
+        <div id="sealDone" class="seal hidden">✔ TRATAMIENTO COMPLETADO</div>
+        <div id="sealWarn" class="seal seal-warn hidden">⚠ MARCADO CON INCIDENCIA</div>
+      </div>
+    </section>
+
+    <!-- ═══════════ HISTORIAL ═══════════ -->
+    <section id="screenHistory" class="screen hidden">
+      <div class="card glass">
+        <div class="row space-between">
+          <h2>Historial</h2>
+          <button class="btn btn-icon" data-nav="home">⬅</button>
+        </div>
+        <div class="row" style="gap:8px;flex-wrap:wrap">
+          <button id="btnExport" class="btn">📤 Exportar JSON</button>
+          <button id="btnImport" class="btn btn-ghost">📥 Importar</button>
+          <input id="fileImport" type="file" accept="application/json" class="hidden" />
+        </div>
+        <div class="divider"></div>
+        <div id="historyList" class="list"></div>
+        <div id="historyEmpty" class="empty muted">Sin registros aún.</div>
+      </div>
+    </section>
+
+    <!-- ═══════════ MENSUAL ═══════════ -->
+    <section id="screenMonthly" class="screen hidden">
+      <div class="card glass">
+        <div class="row space-between">
+          <h2>Informe mensual · Muestras</h2>
+          <button class="btn btn-icon" data-nav="home">⬅</button>
+        </div>
+        <div class="muted tiny">Crea la ruta del mes por plantas (-1, Baja, 1ª–8ª). Exterior/Parking: <b>NO APLICA</b>.</div>
+
+        <div class="divider"></div>
+
+        <div class="kpi kpi-2">
+          <div>
+            <div class="muted tiny">Mes</div>
+            <div id="kpiMonth" class="kpi-value">—</div>
+          </div>
+          <div>
+            <div class="muted tiny">Progreso</div>
+            <div id="kpiMonthDone" class="kpi-value">0 / 0</div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="grid2">
+          <div class="panel glass-lite">
+            <h3>Cabecera</h3>
+            <label class="label">Fecha muestreo</label>
+            <input id="monthSampleDate" class="input" type="date" />
+            <label class="label">Técnico asignado</label>
+            <input id="monthAssignedTech" class="input" placeholder="Ej: Paco" maxlength="18" />
+            <label class="label">Observación general</label>
+            <textarea id="monthHeaderNote" class="input textarea" rows="2" placeholder="Ej: ruta parcial…"></textarea>
+            <div class="row" style="margin-top:10px;gap:8px">
+              <button id="btnSaveMonthlyHeader" class="btn btn-primary" style="flex:1">Guardar cabecera</button>
+              <button id="btnMonthlyExport" class="btn" style="flex:1">📤 Exportar</button>
+            </div>
+          </div>
+
+          <div class="panel glass-lite">
+            <h3>Documento (ref.)</h3>
+            <div class="row" style="gap:8px">
+              <button id="btnMonthlyAttach" class="btn" style="flex:1">📎 Adjuntar</button>
+              <button id="btnMonthlyOpen" class="btn btn-ghost" style="flex:1">📄 Abrir</button>
+              <input id="monthlyFile" type="file" accept="application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" class="hidden" />
+            </div>
+            <div class="divider thin"></div>
+            <h3>Crear ruta</h3>
+            <label class="label">Planta por defecto</label>
+            <select id="monthlyPlantDefault" class="input">
+              <option value="Baja">Baja</option>
+              <option value="1ª">1ª</option><option value="2ª">2ª</option>
+              <option value="3ª">3ª</option><option value="4ª">4ª</option>
+              <option value="5ª">5ª</option><option value="6ª">6ª</option>
+              <option value="7ª">7ª</option><option value="8ª">8ª</option>
+              <option value="-1">-1</option>
+              <option value="Otros">Otros</option>
+            </select>
+            <div class="actions" style="margin-top:10px">
+              <button id="btnMonthlyScanHot" class="btn btn-primary">🔥 Escanear ACS</button>
+              <button id="btnMonthlyScanCold" class="btn btn-primary">❄️ Escanear AFCH</button>
+              <button id="btnMonthlyAdd" class="btn">➕ Añadir punto</button>
+              <button id="btnMonthlyShowEmpty" class="btn btn-ghost">👁️ Vacías: OFF</button>
+              <button id="btnMonthlyClear" class="btn btn-danger">🗑️ Vaciar</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="row" style="gap:6px;flex-wrap:wrap">
+          <span class="badge todo">⏳ Pendiente</span>
+          <span class="badge ok">✅ Hecho</span>
+          <span class="badge issue">⚠ Incid.</span>
+          <span class="badge na">🚫 No aplica</span>
+        </div>
+
+        <div class="divider"></div>
+
+        <div id="monthlyAccordions" class="accordions"></div>
+        <div id="monthlyEmpty" class="empty muted">Aún no hay puntos mensuales.</div>
+      </div>
+    </section>
+
+    <!-- ═══════════ GUÍA ═══════════ -->
+    <section id="screenGuide" class="screen hidden">
+      <div class="card glass">
+        <div class="row space-between">
+          <h2>Guía rápida (audio)</h2>
+          <button class="btn btn-icon" data-nav="home">⬅</button>
+        </div>
+        <p class="muted">Pulsa "Reproducir" y el móvil te lo leerá en voz alta (sin internet).</p>
+        <div class="wavebox">
+          <div class="wave"></div><div class="wave"></div><div class="wave"></div>
+          <div class="wave"></div><div class="wave"></div>
+        </div>
+        <div class="row center">
+          <button id="btnSpeak" class="btn btn-primary">▶ Reproducir</button>
+          <button id="btnStopSpeak" class="btn btn-ghost">⏹ Parar</button>
+        </div>
+        <div class="divider"></div>
+        <textarea id="guideText" class="input textarea" rows="10"></textarea>
+      </div>
+    </section>
+
+    <!-- ═══════════ AJUSTES MODAL ═══════════ -->
+    <div id="modalSettings" class="modal hidden">
+      <div class="modal-card glass">
+        <div class="row space-between">
+          <h2>Ajustes</h2>
+          <button id="btnCloseSettings" class="btn btn-icon">✖</button>
+        </div>
+        <div class="grid2">
+          <div class="panel glass-lite">
+            <h3>Lejía / dosis</h3>
+            <label class="label">% lejía (cloro activo aprox.)</label>
+            <input id="bleachPct" class="input" type="number" min="1" max="12" step="0.5" />
+            <label class="label">Objetivo ppm (mg/L)</label>
+            <input id="targetPpm" class="input" type="number" min="1" step="1" />
+          </div>
+          <div class="panel glass-lite">
+            <h3>Tiempos</h3>
+            <label class="label">Tiempo base (min)</label>
+            <input id="baseMin" class="input" type="number" min="1" step="1" />
+            <label class="label">Factor por litro (min/L)</label>
+            <input id="factorPerL" class="input" type="number" min="0" step="0.01" />
+            <div class="muted tiny">Auto = base + (L × factor). Factor 0 = tiempo fijo.</div>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div class="row">
+          <button id="btnSaveSettings" class="btn btn-primary" style="flex:1">Guardar</button>
+          <button id="btnResetSettings" class="btn btn-danger">Restablecer</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ═══════════ BARRA FLOTANTE DE CRONÓMETROS ═══════════ -->
+  <div id="floatTimers" class="float-bar hidden"></div>
+
+  <!-- ═══════════ TOAST ═══════════ -->
+  <div id="uiToast" class="toast hidden"></div>
+
+  <!-- ═══════════ MODAL PERSONALIZADO (reemplaza alert/confirm/prompt) ═══════════ -->
+  <div id="uiModal" class="modal hidden" style="z-index:50">
+    <div class="modal-card glass" style="max-width:400px;width:92%">
+      <div id="uiModalTitle" style="font-weight:800;font-size:17px;margin-bottom:8px"></div>
+      <div id="uiModalBody" style="color:var(--muted);font-size:14px;line-height:1.5;margin-bottom:12px;white-space:pre-wrap"></div>
+      <input id="uiModalInput" class="input hidden" style="margin-bottom:12px" />
+      <div class="row" style="justify-content:flex-end;gap:8px">
+        <button id="uiModalCancel" class="btn btn-ghost hidden">Cancelar</button>
+        <button id="uiModalOk" class="btn btn-primary">Aceptar</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
