@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <meta name="theme-color" content="#0a0f1e"/>
+  <title>IsiVolt Pro V3 · Legionella</title>
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="icon" href="icons/icon-192.png"/>
+  <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+
+<!-- ===== LOGIN ===== -->
+<div class="login-wrap active" id="loginWrap">
+  <div class="login-card">
+    <div class="login-logo">⚡</div>
+    <div class="login-title">IsiVolt Pro</div>
+    <div class="login-sub">Legionella Control · V3</div>
+    <div class="login-err" id="loginErr">Usuario o contraseña incorrectos</div>
+    <div style="margin-bottom:12px">
+      <label class="label">Usuario</label>
+      <input id="loginUser" class="input" placeholder="usuario" autocomplete="username" value="paco"/>
+    </div>
+    <div style="margin-bottom:18px">
+      <label class="label">Contraseña</label>
+      <input id="loginPass" class="input" type="password" placeholder="contraseña" autocomplete="current-password"/>
+    </div>
+    <button id="btnLogin" class="btn btn-primary btn-full btn-lg">🔐 Entrar</button>
+    <p class="muted small" style="text-align:center;margin-top:14px">Cambia el acceso desde Ajustes ⚙️</p>
+  </div>
+</div>
+
+<!-- ===== APP ===== -->
+<div class="app-wrap" id="appWrap" style="display:none">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="topbar-brand">
+      <div class="topbar-icon">⚡</div>
+      <div>
+        <div class="topbar-title">IsiVolt Pro V3</div>
+        <div class="topbar-sub">Legionella Control</div>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <span id="pillOnline" class="badge badge-blue" style="font-size:10px">Online</span>
+      <button id="btnSettings" class="btn btn-sm" title="Ajustes">⚙️</button>
+    </div>
+  </header>
+
+  <!-- SCREENS -->
+  <!-- 1. RECIRCULACIÓN -->
+  <section class="screen active" id="screenRecirculacion">
+    <div class="sec-header">
+      <div class="sec-title">🔵 Recirculación con Cloro</div>
+      <div class="sec-sub">OT diaria · Tratamiento de instalación · Cronómetro con alarma</div>
+    </div>
+
+    <!-- Técnico activo -->
+    <div class="card" style="margin-bottom:14px">
+      <div class="row sb">
+        <div>
+          <div class="small muted">Técnico</div>
+          <div class="bold mono" id="techDisplay" style="font-size:18px">—</div>
+        </div>
+        <div class="row">
+          <span id="kpiRecirHoy" class="badge badge-blue">0/0 hoy</span>
+          <button id="btnChangeTech" class="btn btn-sm">Cambiar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Punto actual -->
+    <div class="card" id="cardPunto">
+      <div class="card-title">📍 Punto a tratar</div>
+      <div class="row" style="gap:8px;margin-bottom:12px">
+        <input id="puntoCode" class="input" placeholder="Código (ej: 7D001 o manual)" style="flex:1" maxlength="20"/>
+        <button id="btnScanQR" class="btn btn-primary">📷 QR</button>
+        <button id="btnAddPunto" class="btn btn-primary">✅ Añadir</button>
+      </div>
+      <div class="row" style="gap:8px;margin-bottom:10px">
+        <div style="flex:1">
+          <label class="label">Litros depósito</label>
+          <input id="recirLitros" class="input" type="number" min="1" placeholder="60" value="60"/>
+        </div>
+        <div style="flex:1">
+          <label class="label">Tiempo (min)</label>
+          <input id="recirMinutos" class="input" type="number" min="1" placeholder="30" value="30"/>
+        </div>
+        <div style="flex:1">
+          <label class="label">% Lejía</label>
+          <input id="recirLejia" class="input" type="number" min="1" max="12" step="0.5" value="5"/>
+        </div>
+      </div>
+      <div id="dosisCalc" class="seal seal-info small" style="margin-bottom:10px">
+        Dosis estimada: — ml
+      </div>
+      <div>
+        <label class="label">Observación (opcional)</label>
+        <textarea id="recirNota" class="input" rows="2" placeholder="Ej: baño sin retorno, pendiente revisión..."></textarea>
+      </div>
+    </div>
+
+    <!-- Cronómetro -->
+    <div class="card" id="cardCronometro">
+      <div class="row sb" style="margin-bottom:14px">
+        <div>
+          <div class="small muted">En proceso</div>
+          <div class="timer-code" id="timerCode">—</div>
+        </div>
+        <div class="row">
+          <span id="timerStatus" class="badge badge-gray">Listo</span>
+          <button id="btnMinimize" class="btn btn-sm" title="Minimizar">⬇ Minimizar</button>
+        </div>
+      </div>
+
+      <div class="tank-wrap">
+        <div class="tank-water" id="tankWater"></div>
+        <div class="tank-glass"></div>
+        <div class="tank-overlay">
+          <div class="tank-pct" id="tankPct">0%</div>
+          <div class="tank-time" id="timerDisplay">00:00</div>
+        </div>
+      </div>
+
+      <div class="progress-bar" style="margin-bottom:14px">
+        <div class="progress-fill" id="timerProgress" style="width:0%"></div>
+      </div>
+
+      <div class="btn-grid btn-grid-3" style="gap:8px">
+        <button id="btnStartTimer" class="btn btn-primary btn-lg">▶ Iniciar</button>
+        <button id="btnPauseTimer" class="btn btn-warn btn-lg hidden">⏸ Pausar</button>
+        <button id="btnResumeTimer" class="btn btn-success btn-lg hidden">▶ Reanudar</button>
+        <button id="btnFinishOK" class="btn btn-success">✅ Finalizar OK</button>
+        <button id="btnFinishIssue" class="btn btn-danger">⚠ Incidencia</button>
+      </div>
+
+      <div id="sealResult" class="hidden mt14"></div>
+    </div>
+
+    <!-- OT del día -->
+    <div class="card mt14">
+      <div class="row sb" style="margin-bottom:12px">
+        <div class="card-title">📋 OT de hoy</div>
+        <button id="btnExportRecir" class="btn btn-sm">📤 Excel</button>
+      </div>
+      <div id="recirList" class="list">
+        <div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">Sin puntos hoy. Añade un punto arriba.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. OT ANÁLISIS (MUESTRAS MENSUALES) -->
+  <section class="screen" id="screenAnalisis">
+    <div class="sec-header">
+      <div class="sec-title">🧪 OT Análisis · Muestras</div>
+      <div class="sec-sub">Informe mensual de muestras por planta</div>
+    </div>
+
+    <!-- Selector mes + técnico -->
+    <div class="card" style="margin-bottom:14px">
+      <div class="row">
+        <div style="flex:1">
+          <label class="label">Mes</label>
+          <input id="analisisMes" class="input" type="month"/>
+        </div>
+        <div style="flex:1">
+          <label class="label">Técnico</label>
+          <input id="analisisTecnico" class="input" placeholder="Técnico que muestrea" readonly/>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUBIDA EXCEL (zone oculta hasta usar) -->
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-title">📁 Importar listado de puntos</div>
+      <div class="card-sub">Sube el Excel/CSV del mes o pega los códigos directamente</div>
+
+      <div id="uploadZone" class="upload-zone" onclick="document.getElementById('fileAnalisis').click()">
+        <div class="upload-zone-icon">📊</div>
+        <div class="upload-zone-title">Subir Excel / CSV</div>
+        <div class="upload-zone-sub">O arrastra el archivo aquí · También puedes añadir puntos manualmente</div>
+      </div>
+      <input id="fileAnalisis" type="file" accept=".xlsx,.xls,.csv" class="hidden"/>
+
+      <div class="divider"></div>
+
+      <div class="row" style="gap:8px">
+        <input id="analisisPuntoCode" class="input" placeholder="Código punto (últimos 5)" style="flex:1"/>
+        <select id="analisisPlanta" class="input" style="width:auto">
+          <option value="-1">Sótano -1</option>
+          <option value="Baja" selected>Planta Baja</option>
+          <option value="1">1ª Planta</option>
+          <option value="2">2ª Planta</option>
+          <option value="3">3ª Planta</option>
+          <option value="4">4ª Planta</option>
+          <option value="5">5ª Planta</option>
+          <option value="6">6ª Planta</option>
+          <option value="7">7ª Planta</option>
+          <option value="8">8ª Planta</option>
+          <option value="Otros">Otros</option>
+        </select>
+        <select id="analisisTipo" class="input" style="width:auto">
+          <option value="ACS">🔥 ACS</option>
+          <option value="AFCH">❄️ AFCH</option>
+        </select>
+        <button id="btnAddAnalisis" class="btn btn-primary">➕ Añadir</button>
+      </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpi-grid" id="analisisKpis">
+      <div class="kpi-box"><div class="kpi-val" id="kpiATot">0</div><div class="kpi-lbl">Total</div></div>
+      <div class="kpi-box"><div class="kpi-val" style="color:var(--ok)" id="kpiAOk">0</div><div class="kpi-lbl">Tomadas</div></div>
+      <div class="kpi-box"><div class="kpi-val" style="color:var(--warn)" id="kpiAPend">0</div><div class="kpi-lbl">Pendiente</div></div>
+      <div class="kpi-box"><div class="kpi-val" style="color:var(--danger)" id="kpiAIssue">0</div><div class="kpi-lbl">Incidencia</div></div>
+    </div>
+
+    <!-- Lista por planta -->
+    <div id="analisisList" class="analysis-list">
+      <div class="empty-state"><div class="empty-icon">🧪</div><div class="empty-text">Importa un listado o añade puntos manualmente</div></div>
+    </div>
+
+    <div class="row mt14">
+      <button id="btnExportAnalisis" class="btn btn-primary">📤 Exportar Excel</button>
+      <button id="btnClearAnalisis" class="btn btn-danger">🗑 Vaciar mes</button>
+    </div>
+  </section>
+
+  <!-- 3. MEDIDAS -->
+  <section class="screen" id="screenMedidas">
+    <div class="sec-header">
+      <div class="sec-title">📊 Análisis de Medidas</div>
+      <div class="sec-sub">Registro de parámetros · pH · Temperatura · Cloro libre · Cloro total</div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-title">➕ Nueva medida</div>
+      <div class="row" style="gap:8px;margin-bottom:10px">
+        <input id="medidaCodigo" class="input" placeholder="Punto / código" style="flex:2"/>
+        <input id="medidaFecha" class="input" type="date" style="flex:1"/>
+      </div>
+
+      <div class="medidas-form">
+        <div class="medidas-row">
+          <div>
+            <label class="label">pH</label>
+            <div class="row" style="gap:6px"><input id="mPH" class="input" type="number" step="0.01" min="0" max="14" placeholder="7.2"/><span class="muted small">pH</span></div>
+          </div>
+          <div>
+            <label class="label">Temperatura (°C)</label>
+            <div class="row" style="gap:6px"><input id="mTemp" class="input" type="number" step="0.1" placeholder="55"/><span class="muted small">°C</span></div>
+          </div>
+        </div>
+        <div class="medidas-row">
+          <div>
+            <label class="label">Cloro libre (mg/L)</label>
+            <div class="row" style="gap:6px"><input id="mCloroL" class="input" type="number" step="0.01" min="0" placeholder="0.5"/><span class="muted small">mg/L</span></div>
+          </div>
+          <div>
+            <label class="label">Cloro total (mg/L)</label>
+            <div class="row" style="gap:6px"><input id="mCloroT" class="input" type="number" step="0.01" min="0" placeholder="0.8"/><span class="muted small">mg/L</span></div>
+          </div>
+        </div>
+        <div class="medidas-row">
+          <div>
+            <label class="label">Turbidez (NTU)</label>
+            <div class="row" style="gap:6px"><input id="mTurb" class="input" type="number" step="0.01" min="0" placeholder="0.5"/><span class="muted small">NTU</span></div>
+          </div>
+          <div>
+            <label class="label">Conductividad (µS/cm)</label>
+            <div class="row" style="gap:6px"><input id="mCond" class="input" type="number" step="1" min="0" placeholder="350"/><span class="muted small">µS/cm</span></div>
+          </div>
+        </div>
+        <div>
+          <label class="label">Observación</label>
+          <textarea id="mNota" class="input" rows="2" placeholder="Notas adicionales..."></textarea>
+        </div>
+      </div>
+
+      <div class="row mt14">
+        <button id="btnSaveMedida" class="btn btn-primary btn-lg" style="flex:1">💾 Guardar medida</button>
+      </div>
+    </div>
+
+    <!-- Alertas de rangos -->
+    <div id="medidasAlerts" class="hidden">
+      <div class="seal seal-warn mt8" id="alertText"></div>
+    </div>
+
+    <!-- Historial de medidas -->
+    <div class="card mt14">
+      <div class="row sb" style="margin-bottom:12px">
+        <div class="card-title">📋 Historial de medidas</div>
+        <div class="row" style="gap:8px">
+          <input id="medidaFiltroFecha" class="input" type="date" style="width:auto"/>
+          <button id="btnExportMedidas" class="btn btn-sm">📤 Excel</button>
+        </div>
+      </div>
+      <div id="medidasList" class="list">
+        <div class="empty-state"><div class="empty-icon">📊</div><div class="empty-text">Sin medidas registradas hoy</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. PURGA GRIFOS -->
+  <section class="screen" id="screenPurga">
+    <div class="sec-header">
+      <div class="sec-title">🚰 Purga de Grifos</div>
+      <div class="sec-sub">Apertura y cierre de grifos · ACS / AFCH · Cronómetro con alarma</div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-title">⚙️ Configurar purga</div>
+
+      <div class="purga-type-select">
+        <button class="type-btn acs selected" id="tipoACS" onclick="selectTipoPurga('ACS')">
+          <span class="type-icon">🔥</span>ACS<br><span class="small muted">Agua Caliente</span>
+        </button>
+        <button class="type-btn afch" id="tipoAFCH" onclick="selectTipoPurga('AFCH')">
+          <span class="type-icon">❄️</span>AFCH<br><span class="small muted">Agua Fría</span>
+        </button>
+      </div>
+
+      <div class="row" style="gap:8px;margin-bottom:10px">
+        <div style="flex:2">
+          <label class="label">Código / Ubicación</label>
+          <input id="purgaCodigo" class="input" placeholder="Ej: 2D071 · Hab 201"/>
+        </div>
+        <div style="flex:1">
+          <label class="label">Tiempo (min)</label>
+          <input id="purgaMinutos" class="input" type="number" min="1" max="60" value="5"/>
+        </div>
+      </div>
+
+      <div>
+        <label class="label">Observación</label>
+        <textarea id="purgaNota" class="input" rows="2" placeholder="Ej: grifo exterior, sin retorno..."></textarea>
+      </div>
+    </div>
+
+    <!-- Cronómetro purga -->
+    <div class="card" id="cardPurga">
+      <div class="row sb" style="margin-bottom:14px">
+        <div>
+          <div class="small muted" id="purgaTipoLabel">🔥 ACS · Apertura</div>
+          <div class="timer-code" id="purgaCode">—</div>
+        </div>
+        <div class="row">
+          <span id="purgaStatus" class="badge badge-gray">Listo</span>
+          <button id="btnMinimizePurga" class="btn btn-sm">⬇ Minimizar</button>
+        </div>
+      </div>
+
+      <div class="timer-display" id="purgaDisplay">05:00</div>
+      <div class="progress-bar" style="margin-bottom:18px">
+        <div class="progress-fill" id="purgaProgress" style="width:0%"></div>
+      </div>
+
+      <div class="btn-grid btn-grid-3" style="gap:8px">
+        <button id="btnStartPurga" class="btn btn-primary btn-lg">▶ Abrir</button>
+        <button id="btnPausePurga" class="btn btn-warn btn-lg hidden">⏸ Pausar</button>
+        <button id="btnResumePurga" class="btn btn-success btn-lg hidden">▶ Reanudar</button>
+        <button id="btnFinishPurgaOK" class="btn btn-success">✅ Cerrar OK</button>
+        <button id="btnFinishPurgaIssue" class="btn btn-danger">⚠ Problema</button>
+      </div>
+
+      <div id="purgaSeal" class="hidden mt14"></div>
+    </div>
+
+    <!-- Historial purga hoy -->
+    <div class="card mt14">
+      <div class="row sb" style="margin-bottom:12px">
+        <div class="card-title">📋 Purgados hoy</div>
+        <button id="btnExportPurga" class="btn btn-sm">📤 Excel</button>
+      </div>
+      <div id="purgaList" class="list">
+        <div class="empty-state"><div class="empty-icon">🚰</div><div class="empty-text">Sin purgados hoy</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-screen="screenRecirculacion">
+      <span class="nav-icon">🔵</span>Recirculación
+    </button>
+    <button class="nav-btn" data-screen="screenAnalisis">
+      <span class="nav-icon">🧪</span>Análisis
+    </button>
+    <button class="nav-btn" data-screen="screenMedidas">
+      <span class="nav-icon">📊</span>Medidas
+    </button>
+    <button class="nav-btn" data-screen="screenPurga">
+      <span class="nav-icon">🚰</span>Purga
+    </button>
+  </nav>
+
+</div><!-- /app-wrap -->
+
+<!-- MINI TIMER flotante (recirculación minimizada) -->
+<div class="mini-timer" id="miniTimer">
+  <div class="mini-timer-inner" id="miniTimerInner">
+    <div class="mini-timer-dot"></div>
+    <div class="mini-timer-info">
+      <div class="mini-timer-code" id="miniCode">—</div>
+      <div class="mini-timer-left" id="miniLeft">00:00</div>
+    </div>
+    <div class="mini-timer-expand">⬆</div>
+  </div>
+</div>
+
+<!-- MINI TIMER PURGA flotante -->
+<div class="mini-timer" id="miniTimerPurga" style="bottom:130px">
+  <div class="mini-timer-inner" id="miniTimerPurgaInner" style="background:linear-gradient(135deg,rgba(255,107,53,.2),rgba(167,139,250,.15));border-color:rgba(255,107,53,.35)">
+    <div class="mini-timer-dot" style="background:var(--c);box-shadow:0 0 0 4px rgba(255,107,53,.2)"></div>
+    <div class="mini-timer-info">
+      <div class="mini-timer-code" id="miniPurgaCode">—</div>
+      <div class="mini-timer-left" style="color:var(--c)" id="miniPurgaLeft">00:00</div>
+    </div>
+    <div class="mini-timer-expand">⬆</div>
+  </div>
+</div>
+
+<!-- ALARM OVERLAY (cronómetro terminado) -->
+<div class="alarm-overlay" id="alarmOverlay">
+  <div class="alarm-icon">✅</div>
+  <div class="alarm-title" id="alarmTitle">¡Tiempo completado!</div>
+  <div class="alarm-code" id="alarmCode">—</div>
+  <div class="muted small" style="margin-bottom:28px">Toca para cerrar y registrar</div>
+  <button id="btnAlarmClose" class="btn btn-success btn-lg" style="min-width:200px">✅ Registrar y cerrar</button>
+</div>
+
+<!-- MODAL AJUSTES -->
+<div class="modal-overlay" id="modalSettings">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">⚙️ Ajustes</div>
+      <button id="btnCloseSettings" class="btn btn-sm">✖</button>
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">🔐 Acceso</div>
+      <div style="margin-bottom:10px">
+        <label class="label">Usuario</label>
+        <input id="setUser" class="input" placeholder="usuario"/>
+      </div>
+      <div style="margin-bottom:10px">
+        <label class="label">Contraseña actual</label>
+        <input id="setPassOld" class="input" type="password" placeholder="contraseña actual"/>
+      </div>
+      <div style="margin-bottom:10px">
+        <label class="label">Nueva contraseña</label>
+        <input id="setPassNew" class="input" type="password" placeholder="nueva contraseña"/>
+      </div>
+      <button id="btnSaveAccess" class="btn btn-primary">Guardar acceso</button>
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">🧮 Cálculo lejía</div>
+      <div class="medidas-row" style="margin-bottom:10px">
+        <div><label class="label">% Lejía (cloro activo)</label><input id="setCloroLejia" class="input" type="number" min="1" max="12" step="0.5" value="5"/></div>
+        <div><label class="label">PPM objetivo</label><input id="setTargetPPM" class="input" type="number" min="1" value="50"/></div>
+      </div>
+      <button id="btnSaveCalc" class="btn btn-primary">Guardar cálculo</button>
+    </div>
+    <div class="card">
+      <div class="card-title">💾 Datos</div>
+      <div class="row" style="gap:8px">
+        <button id="btnExportAll" class="btn">📤 Exportar todo</button>
+        <button id="btnLogout" class="btn btn-danger">🚪 Cerrar sesión</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- QR SCAN MODAL -->
+<div class="modal-overlay" id="modalQR">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">📷 Escanear QR</div>
+      <button id="btnCloseQR" class="btn btn-sm">✖</button>
+    </div>
+    <div style="position:relative;border-radius:14px;overflow:hidden;background:#000;aspect-ratio:4/3;margin-bottom:12px">
+      <video id="qrVideo" playsinline style="width:100%;height:100%;object-fit:cover"></video>
+    </div>
+    <div class="row">
+      <input id="qrManual" class="input" placeholder="O escribe el código manualmente" style="flex:1"/>
+      <button id="btnQRManual" class="btn btn-primary">Añadir</button>
+    </div>
+    <p class="muted small mt8" style="text-align:center">Si no funciona la cámara, escribe el código arriba</p>
+  </div>
+</div>
+
+<!-- TOASTS -->
+<div class="toast-root" id="toastRoot"></div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
