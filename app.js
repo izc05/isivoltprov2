@@ -209,22 +209,24 @@ async function refreshOT(){
     el.querySelector('[data-quickok="1"]').addEventListener("click", async (e) => {
       e.stopPropagation();
       const note = prompt("OK rápido (opcional):", it.note || "") ?? "";
-      await dbAddHistory(enrichWithHospitalFields({ servicio:selectedService, tech: state.tech, date: todayStr(), code: it.code, ts: Date.now(), liters:null, doseMl:null, minutes:null, result:"ok", note: (note.trim().slice(0,120) || "Marcado rápido") });
+      await dbAddHistory(enrichWithHospitalFields({ servicio:getSelectedService(), tech: state.tech, date: todayStr(), code: it.code, ts: Date.now(), liters:null, doseMl:null, minutes:null, result:"ok", note: (note.trim().slice(0,120) || "Marcado rápido") }));
       await markOTStatus(it.code, "ok");
       if (note) await saveOTNote(it.code, note);
       toast(`Marcado ✅ ${it.code}`, "ok", "OT");
-    }));el.querySelector('[data-quickissue="1"]').addEventListener("click", async (e) => {
+    });
+    el.querySelector('[data-quickissue="1"]').addEventListener("click", async (e) => {
       e.stopPropagation();
       const reason = prompt("Incidencia rápida:", it.note || "");
       if (reason == null) return;
-      await dbAddHistory(enrichWithHospitalFields({ servicio:selectedService, tech: state.tech, date: todayStr(), code: it.code, ts: Date.now(), liters:null, doseMl:null, minutes:null, result:"issue", note: (reason.trim().slice(0,120) || "Incidencia") });
+      await dbAddHistory(enrichWithHospitalFields({ servicio:getSelectedService(), tech: state.tech, date: todayStr(), code: it.code, ts: Date.now(), liters:null, doseMl:null, minutes:null, result:"issue", note: (reason.trim().slice(0,120) || "Incidencia") }));
       await markOTStatus(it.code, "issue");
       await saveOTNote(it.code, reason);
       toast(`Marcado ⚠ ${it.code}`, "warn", "OT");
-    }));bindSwipe(el, {
+    });
+    bindSwipe(el, {
       onRight: async ()=>{
         const note = prompt("✅ OK (opcional):", it.note || "") ?? "";
-        await dbAddHistory(enrichWithHospitalFields({ servicio:selectedService, tech: state.tech, date: todayStr(), code: it.code, ts: Date.now(), liters:null, doseMl:null, minutes:null, result:"ok", note: (note.trim().slice(0,120) || "Swipe OK") });
+        await dbAddHistory(enrichWithHospitalFields({ servicio:getSelectedService(), tech: state.tech, date: todayStr(), code: it.code, ts: Date.now(), liters:null, doseMl:null, minutes:null, result:"ok", note: (note.trim().slice(0,120) || "Swipe OK") }));
         await markOTStatus(it.code, "ok");
         if (note) await saveOTNote(it.code, note);
         toast(`Swipe ✅ ${it.code}`, "ok", "OT");
@@ -232,12 +234,13 @@ async function refreshOT(){
       onLeft: async ()=>{
         const reason = prompt("⚠ Incidencia:", it.note || "");
         if (reason == null) return;
-        await dbAddHistory(enrichWithHospitalFields({ servicio:selectedService, tech: state.tech, date: todayStr(), code: it.code, ts: Date.now(), liters:null, doseMl:null, minutes:null, result:"issue", note: (reason.trim().slice(0,120) || "Swipe Incidencia") });
+        await dbAddHistory(enrichWithHospitalFields({ servicio:getSelectedService(), tech: state.tech, date: todayStr(), code: it.code, ts: Date.now(), liters:null, doseMl:null, minutes:null, result:"issue", note: (reason.trim().slice(0,120) || "Swipe Incidencia") }));
         await markOTStatus(it.code, "issue");
         await saveOTNote(it.code, reason);
         toast(`Swipe ⚠ ${it.code}`, "warn", "OT");
       }
-    }));list.appendChild(el);
+    });
+    list.appendChild(el);
   }
 }
 
@@ -480,7 +483,7 @@ async function finishTimer(auto=false){
   const mins = Number($("targetMinutes").value) || null;
   const note = String($("pointNote").value || "").trim().slice(0,120);
 
-  await dbAddHistory(enrichWithHospitalFields({ servicio:selectedService,
+  await dbAddHistory(enrichWithHospitalFields({ servicio:getSelectedService(),
     tech: state.tech,
     date: todayStr(),
     code: state.currentCode,
@@ -490,7 +493,8 @@ async function finishTimer(auto=false){
     minutes: mins,
     result: "ok",
     note: note || undefined
-  }));if (note) await saveOTNote(state.currentCode, note);
+  }));
+  if (note) await saveOTNote(state.currentCode, note);
   await markOTStatus(state.currentCode, "ok");
 }
 
@@ -516,13 +520,13 @@ async function markIssue(){
   const code = state.currentCode;
   if (!code) return;
 
-  const reason = prompt("Incidencia (rápido):
+  const reason = prompt(`Incidencia (rápido):
 - No accesible
 - Bomba no arranca
 - Sin retorno
 - Fuga
 
-Escribe una frase corta:");
+Escribe una frase corta:`);
   if (reason == null) return;
 
   $("timerCode").textContent = code;
@@ -532,7 +536,7 @@ Escribe una frase corta:");
   const note = String($("pointNote").value || "").trim().slice(0,120);
   const finalReason = (reason.trim().slice(0,120) || "Incidencia");
 
-  await dbAddHistory(enrichWithHospitalFields({ servicio:selectedService,
+  await dbAddHistory(enrichWithHospitalFields({ servicio:getSelectedService(),
     tech: state.tech,
     date: todayStr(),
     code,
@@ -542,7 +546,8 @@ Escribe una frase corta:");
     minutes: Number($("targetMinutes").value) || null,
     result: "issue",
     note: note ? `${finalReason} · ${note}` : finalReason
-  }));await saveOTNote(code, note || finalReason);
+  }));
+  await saveOTNote(code, note || finalReason);
   await markOTStatus(code, "issue");
   show("timer");
   initBubbles();
@@ -814,10 +819,10 @@ async function openMonthly(){
         await openMonthly();
       });
       el.querySelector('[data-na="1"]').addEventListener("click", async ()=>{
-        const r = prompt("No aplica (motivo):
+        const r = prompt(`No aplica (motivo):
 - Exterior (otra empresa)
 - Parking sin tomas
-- No corresponde este mes", it.note || "Exterior (otra empresa)");
+- No corresponde este mes`, it.note || "Exterior (otra empresa)");
         if (r == null) return;
         it.status = "na";
         it.updatedAt = Date.now();
@@ -887,8 +892,8 @@ async function addMonthlyQuick(code, water){
                 : String(el||"").toUpperCase().startsWith("FRE") ? "Fregadero"
                 : String(el||"").toUpperCase().startsWith("O") ? "Otro"
                 : "Ducha";
-  const desc = prompt("Descripción corta (opcional):
-Ej: 2ª Planta · Hab 21024 · Aseo", "") ?? "";
+  const desc = prompt(`Descripción corta (opcional):
+Ej: 2ª Planta · Hab 21024 · Aseo`, "") ?? "";
 
   await dbPutMonthly({
     key: `${tech}|${month}|${plant}|${water}|${c}`,
@@ -1406,6 +1411,12 @@ function enrichWithHospitalFields(obj){
 }
 
 
+
+function getSelectedService(){
+  const sel = document.getElementById("serviceSelect");
+  return sel?.value || "";
+}
+
 function populateServiceSelect(){
   const sel = document.getElementById("serviceSelect");
   if(!sel) return;
@@ -1494,10 +1505,10 @@ function init(){
   $("btnMonthly").addEventListener("click", ()=> openMonthly());
 
   $("btnExplainOT").addEventListener("click", ()=>{
-    alert("OT de hoy = la lista de puntos que vas a hacer hoy.
+    alert(`OT de hoy = la lista de puntos que vas a hacer hoy.
 
 Se crea añadiendo puntos (QR o código).
-Cuando completas un punto, queda ✅ y se guarda en el historial.");
+Cuando completas un punto, queda ✅ y se guarda en el historial.`);
   });
 
   $("btnClearOT").addEventListener("click", async ()=>{
