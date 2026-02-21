@@ -56,8 +56,23 @@ const screens = {
   guide: $("screenGuide"),
 };
 
+function storageGet(key, fallback = ""){
+  try {
+    const v = localStorage.getItem(key);
+    return v == null ? fallback : v;
+  } catch {
+    return fallback;
+  }
+}
+function storageSet(key, value){
+  try { localStorage.setItem(key, value); } catch {}
+}
+function storageRemove(key){
+  try { localStorage.removeItem(key); } catch {}
+}
+
 const state = {
-  tech: localStorage.getItem("isivolt.tech") || "",
+  tech: storageGet("isivolt.tech", ""),
   currentCode: "",
   currentOTKey: "",
   stream: null,
@@ -106,12 +121,12 @@ function show(screenName){
 }
 
 function getSettings(){
-  const raw = localStorage.getItem(SETTINGS_KEY);
+  const raw = storageGet(SETTINGS_KEY, "");
   if (!raw) return { ...DEFAULT_SETTINGS };
   try { return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) }; }
   catch { return { ...DEFAULT_SETTINGS }; }
 }
-function saveSettings(s){ localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); }
+function saveSettings(s){ storageSet(SETTINGS_KEY, JSON.stringify(s)); }
 
 function normalizeCode(input){
   const s = String(input || "").trim();
@@ -1002,12 +1017,12 @@ async function exportMonthly(){
 
 // ---------------- Guide (speech synthesis) ----------------
 function openGuide(){
-  const t = localStorage.getItem(GUIDE_KEY) || DEFAULT_GUIDE;
+  const t = storageGet(GUIDE_KEY, DEFAULT_GUIDE) || DEFAULT_GUIDE;
   $("guideText").value = t;
   show("guide");
 }
 function saveGuideText(){
-  localStorage.setItem(GUIDE_KEY, $("guideText").value);
+  storageSet(GUIDE_KEY, $("guideText").value);
 }
 function speakGuide(){
   saveGuideText();
@@ -1118,10 +1133,10 @@ let wakeLock = null;
 let ropeAnimId = null;
 
 function loadPodcastState(){
-  try { return JSON.parse(localStorage.getItem(PODCAST_KEY) || "{}"); } catch { return {}; }
+  try { return JSON.parse(storageGet(PODCAST_KEY, "{}") || "{}"); } catch { return {}; }
 }
 function savePodcastState(data){
-  try { localStorage.setItem(PODCAST_KEY, JSON.stringify(data)); } catch {}
+  storageSet(PODCAST_KEY, JSON.stringify(data));
 }
 function fmtClock(sec){
   if (!isFinite(sec) || sec < 0) return "00:00";
@@ -1470,13 +1485,19 @@ function init(){
     const name = String($("techName").value || "").trim();
     if (!name) return toast("Escribe el nombre del técnico.");
     state.tech = name;
-    localStorage.setItem("isivolt.tech", name);
+    storageSet("isivolt.tech", name);
     show("home");
     await refreshOT();
   });
 
+  $("techName").addEventListener("keydown", async (e)=>{
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    $("btnSetTech").click();
+  });
+
   $("btnSwitchTech").addEventListener("click", ()=>{
-    localStorage.removeItem("isivolt.tech");
+    storageRemove("isivolt.tech");
     state.tech = "";
     $("techName").value = "";
     show("profile");
@@ -1484,7 +1505,7 @@ function init(){
 
   $("btnLogout").addEventListener("click", ()=>{
     if (!confirm("¿Cerrar sesión en este móvil?")) return;
-    localStorage.removeItem("isivolt.tech");
+    storageRemove("isivolt.tech");
     state.tech = "";
     $("techName").value = "";
     show("profile");
